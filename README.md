@@ -4,16 +4,13 @@ State machine for Ecto.
 
 ## Installation
 
+Add `ecto_state_mc` to your list of dependencies in `mix.exs`:
 
-The package can be installed as:
-
-  1. Add `ecto_state_mc` to your list of dependencies in `mix.exs`:
-
-    ```elixir
-    def deps do
-      [{:ecto_state_mc, "~> 0.1.0"}]
-    end
-    ```
+```elixir
+def deps do
+  [{:ecto_state_mc, "~> 0.1.0"}]
+end
+```
 
 ## How to use?
 Example:
@@ -22,7 +19,7 @@ Example:
 defmodule Example.User do
   use Example.Web, :model
 
-  import StateMc.EctoSm
+  import EctoStateMc
 
   schema "users" do
     field :state, :string, default: "waiting"
