@@ -25,7 +25,7 @@ defmodule Example.User do
     field :state, :string, default: "waiting"
   end
 
-  statemc :state do
+  state_machine :state do
     defstate [:waiting, :approved, :rejected]
     defevent :approve, %{from: [:waiting, :rejected], to: :approved}, fn(changeset) ->
       changeset

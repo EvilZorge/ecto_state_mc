@@ -13,6 +13,7 @@ defmodule EctoStateMc do
       end
       def current_state(record) do
         case Map.fetch(record, smc_column()) do
+          {:ok, nil} -> nil
           {:ok, state} -> String.to_atom(state)
           _ -> nil
         end
