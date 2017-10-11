@@ -1,7 +1,7 @@
 defmodule EctoStateMc do
   defmacro state_machine(column, body) do
     quote do
-      def smc_column() do
+      def smc_column do
         unquote(column)
       end
 
@@ -21,12 +21,23 @@ defmodule EctoStateMc do
 
       def validate_state_transition(changeset, from_states, to_state) do
         cr_state = current_state(changeset.data)
-        if Enum.member?(from_states, cr_state) && state_defined?(to_state) do
+
+        if can_change_state?(cr_state, to_state, from_states) do
           changeset
         else
           Ecto.Changeset.add_error(changeset, smc_column(),
             "You can't move state from :#{cr_state} to :#{to_state}")
         end
+      end
+
+      defp can_change_state?(cr_state, to_state, from_states) do
+        from_states = if all_states?(from_states), do: states(), else: from_states
+
+        Enum.member?(from_states, cr_state) && state_defined?(to_state)
+      end
+
+      defp all_states?(from_states) do
+        from_states == [:all_states]
       end
 
       unquote(body[:do])
@@ -35,7 +46,7 @@ defmodule EctoStateMc do
 
   defmacro defstate(states) do
     quote do
-      def states() do
+      def states do
         unquote(states)
       end
 
@@ -48,25 +59,27 @@ defmodule EctoStateMc do
 
   defmacro defevent(event, options, callback \\ default_callback()) do
     quote do
-      def unquote(:"#{event}")(%Ecto.Changeset{} = changeset) do
+      def unquote(:"#{event}")(struct) do
         %{from: from_states, to: to_state} = unquote(options)
-        changeset
-        |> Ecto.Changeset.put_change(smc_column(), Atom.to_string(to_state))
-        |> validate_state_transition(from_states, to_state)
-        |> unquote(callback).()
-      end
-      def unquote(:"#{event}")(record) do
-        %{from: from_states, to: to_state} = unquote(options)
-        record
-        |> Ecto.Changeset.change(%{smc_column() => Atom.to_string(to_state)})
+        struct
+        |> change_struct(to_state)
         |> validate_state_transition(from_states, to_state)
         |> unquote(callback).()
       end
 
+      defp change_struct(%Ecto.Changeset{} = changeset, to_state) do
+        Ecto.Changeset.put_change(changeset, smc_column(), Atom.to_string(to_state))
+      end
+
+      defp change_struct(record, to_state) do
+        Ecto.Changeset.change(record, %{smc_column() => Atom.to_string(to_state)})
+      end
+
       def unquote(:"can_#{event}?")(record) do
         %{from: from_states, to: to_state} = unquote(options)
-        cr_state = current_state(record)
-        Enum.member?(from_states, cr_state) && state_defined?(to_state)
+        record
+        |> current_state()
+        |> can_change_state?(to_state, from_states)
       end
     end
   end

@@ -8,10 +8,11 @@ defmodule EctoStateMcTest do
   setup_all do
     {
       :ok,
-      unconfirmed_user: insert(:user, %{ state: "unconfirmed" }),
-      confirmed_user:   insert(:user, %{ state: "confirmed" }),
-      blocked_user:     insert(:user, %{ state: "blocked" }),
-      admin:            insert(:user, %{ state: "admin" })
+      unconfirmed_user: insert(:user, %{state: "unconfirmed"}),
+      confirmed_user:   insert(:user, %{state: "confirmed"}),
+      blocked_user:     insert(:user, %{state: "blocked"}),
+      admin:            insert(:user, %{state: "admin"}),
+      moderator:        insert(:user, %{state: "moderator"})
     }
   end
 
@@ -96,7 +97,7 @@ defmodule EctoStateMcTest do
   end
 
   test "#states" do
-    assert User.states() == [:unconfirmed, :confirmed, :blocked, :admin]
+    assert User.states() == [:unconfirmed, :confirmed, :blocked, :admin, :moderator]
   end
 
   describe "#changeset events" do
@@ -175,6 +176,36 @@ defmodule EctoStateMcTest do
       assert Ecto.Changeset.change(context[:confirmed_user]) |> User.can_make_admin?() == true
       assert Ecto.Changeset.change(context[:blocked_user]) |> User.can_make_admin?() == false
       assert Ecto.Changeset.change(context[:admin]) |> User.can_make_admin?() == false
+    end
+  end
+
+  describe "options" do
+    test "all_states?", context do
+      changeset = User.make_moderator(context[:unconfirmed_user])
+      assert changeset.valid?            == true
+      assert changeset.changes.state     == "moderator"
+      assert Map.keys(changeset.changes) == ~w(confirmed_at state)a
+
+      changeset = User.make_moderator(context[:confirmed_user])
+      assert changeset.valid?            == true
+      assert changeset.changes.state     == "moderator"
+      assert Map.keys(changeset.changes) == ~w(confirmed_at state)a
+
+      changeset = User.make_moderator(context[:blocked_user])
+      assert changeset.valid?            == true
+      assert changeset.changes.state     == "moderator"
+      assert Map.keys(changeset.changes) == ~w(confirmed_at state)a
+
+      changeset = User.make_moderator(context[:admin])
+      assert changeset.valid?            == true
+      assert changeset.changes.state     == "moderator"
+      assert Map.keys(changeset.changes) == ~w(confirmed_at state)a
+    end
+
+    test "all_states? with same state", context do
+      changeset = User.make_moderator(context[:moderator])
+      assert changeset.valid?  == true
+      assert Map.keys(changeset.changes) == ~w(confirmed_at)a
     end
   end
 end
