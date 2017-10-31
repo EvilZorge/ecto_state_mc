@@ -37,7 +37,7 @@ defmodule EctoStateMc do
       end
 
       defp all_states?(from_states) do
-        from_states == [:all_states]
+        from_states == :all_states
       end
 
       unquote(body[:do])

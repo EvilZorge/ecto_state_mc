@@ -39,7 +39,7 @@ end
 You can set all_states option to move from all defined states
 
 ```elixir
-defevent :reject, %{from: [:all_states], to: :rejected}
+defevent :reject, %{from: :all_states, to: :rejected}
 ```
 
 ## How to run?
